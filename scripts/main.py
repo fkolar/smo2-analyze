@@ -31,12 +31,9 @@ def main():
     print("First few rows of the DataFrame:\n", df.head())  # Debug: Print first few rows of DataFrame
 
     processor = DataProcessor(df)
-    df_processed, work_intervals = processor.process()  # Get work_intervals here
+    df_processed, work_intervals, slopes = processor.process()  # Get work_intervals and slopes here
 
-    for idx, (start, end) in enumerate(work_intervals, 1):
-        print(f"Interval #{idx} starts from {start:.2f} min to {end:.2f} min.")
-
-    plotter = DataPlotter(df_processed, work_intervals=work_intervals)  # Pass work_intervals
+    plotter = DataPlotter(df_processed, work_intervals=work_intervals, slopes=slopes)  # Pass slopes
 
     # Define start_time and end_time (in minutes), pass -1 to use full range
     start_time = 10  # Use -1 to indicate no zoom (full range)

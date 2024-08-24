@@ -1,6 +1,7 @@
 # scripts/data_processing.py
 
 import pandas as pd
+import numpy as np
 from scripts import SMOOTHING_WINDOW, MIN_PERIODS, FIELD_MAPPINGS
 
 class DataProcessor:
@@ -25,6 +26,27 @@ class DataProcessor:
                 print(f"Error: The required field '{mapped_field}' is not present in the DataFrame.")
                 raise ValueError(f"The required field '{mapped_field}' is not present in the DataFrame.")
 
+    def calculate_slope_for_intervals(self, intervals):
+        """
+        Calculate and print the slope of SmO2 for each interval.
+        """
+        print("Calculating slopes for intervals...")
+        slopes = []
+        for i, (start, end) in enumerate(intervals):
+            interval_data = self.df[(self.df['elapsed_time'] >= start) & (self.df['elapsed_time'] <= end)]
+            if not interval_data.empty:
+                x = interval_data['elapsed_time']
+                y = interval_data['smo2_smooth']
+                # Calculate the slope using numpy polyfit
+                slope, intercept = np.polyfit(x, y, 1)
+                slopes.append(slope)
+                print(f"Slope for Interval #{i + 1} ({start:.2f} min to {end:.2f} min): {slope:.4f}")
+            else:
+                print(f"Interval #{i + 1} ({start:.2f} min to {end:.2f} min) has no data.")
+
+        print("Completed slope calculation.")
+        return slopes
+
     def identify_delayed_intervals(self):
         """
         Identify work intervals based on a fixed pattern and define sub-intervals
@@ -34,7 +56,6 @@ class DataProcessor:
         min_time = self.df['elapsed_time'].min()
         max_time = self.df['elapsed_time'].max()
 
-        # Define work intervals: each 5 minutes of work, followed by 1 minute break
         start = min_time
         interval_count = 1
 
@@ -42,7 +63,6 @@ class DataProcessor:
             work_start = start
             work_end = start + 5
 
-            # Define the sub-interval for the last 4 minutes of the work interval
             trend_start = work_start + 1  # Start at the 2nd minute of the work interval
             trend_end = work_end  # End at the 5th minute
 
@@ -51,8 +71,7 @@ class DataProcessor:
 
             work_intervals.append((trend_start, trend_end))
 
-            # Move to the next interval after a 1-minute break
-            start += 6  # 5 minutes of work + 1 minute of break
+            start += 6  # Move to the next interval after a 1-minute break
             interval_count += 1
 
         print(f"Total work intervals detected: {len(work_intervals)}")
@@ -62,4 +81,5 @@ class DataProcessor:
         self.calculate_elapsed_time()
         self.smooth_data()
         delayed_intervals = self.identify_delayed_intervals()
-        return self.df, delayed_intervals
+        slopes = self.calculate_slope_for_intervals(delayed_intervals)  # Calculate slopes for each interval
+        return self.df, delayed_intervals, slopes

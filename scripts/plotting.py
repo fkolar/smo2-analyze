@@ -6,11 +6,18 @@ import numpy as np  # Import numpy
 from scripts import *
 
 class DataPlotter:
-    def __init__(self, df, work_intervals=None):
+    def __init__(self, df, work_intervals=None, slopes=None):
         self.df = df
         self.work_intervals = work_intervals if work_intervals else []
+        self.slopes = slopes if slopes else []
 
     def plot_data(self, start_time=None, end_time=None):
+        if SHOW_SMO2_SLOPE_VS_POWER:
+            self.plot_smo2_slope_vs_power()
+        else:
+            self.plot_standard_chart(start_time, end_time)
+
+    def plot_standard_chart(self, start_time=None, end_time=None):
         if start_time is None or end_time is None:
             start_time = self.df['elapsed_time'].min()
             end_time = self.df['elapsed_time'].max()
@@ -20,8 +27,7 @@ class DataPlotter:
             start_time = self.df['elapsed_time'].min()
             end_time = self.df['elapsed_time'].max()
 
-        # Increase the width of the plot for better spacing
-        fig, ax1 = plt.subplots(figsize=(12, 6))  # Increased width from 10 to 12
+        fig, ax1 = plt.subplots(figsize=(12, 6))  # Slightly wider
 
         lines = []
 
@@ -53,7 +59,7 @@ class DataPlotter:
             ax1.set_ylim(SMO2_RANGE)
 
         ax3 = ax1.twinx()
-        ax3.spines['right'].set_position(('axes', 1.2))
+        ax3.spines['right'].set_position(('axes', 1.1))
         if SHOW_HR:
             line_hr, = ax3.plot(self.df['elapsed_time'], self.df['hr_smooth'], color=HR_COLOR, linewidth=HR_LINEWIDTH,
                                 label='Heart Rate')
@@ -63,7 +69,7 @@ class DataPlotter:
             ax3.set_ylim(HR_RANGE)
 
         ax4 = ax1.twinx()
-        ax4.spines['right'].set_position(('axes', 1.35))
+        ax4.spines['right'].set_position(('axes', 1.25))
         if SHOW_THB:
             line_thb, = ax4.plot(self.df['elapsed_time'], self.df['thb_smooth'], color=THB_COLOR,
                                  linewidth=THB_LINEWIDTH, label='tHb')
@@ -102,3 +108,43 @@ class DataPlotter:
                     p = np.poly1d(z)
                     ax.plot(delayed_slope_data['elapsed_time'], p(delayed_slope_data['elapsed_time']), color='black',
                             linestyle='-', linewidth=2)  # Thin black line for trend
+                    # Print slope higher to avoid overlapping
+                    mid_point = (start + end) / 2
+                    max_smo2 = delayed_slope_data['smo2_smooth'].max()
+                    ax.text(mid_point, max_smo2 + 2, f"{z[0]:.4f}", fontsize=10, color='black', ha='center')
+
+    def plot_smo2_slope_vs_power(self):
+        fig, ax = plt.subplots(figsize=(10, 6))
+        power_values = []
+        slope_values = []
+
+        last_valid_power = None  # Variable to store the last valid power value
+        threshold_power_difference = 30  # Define a threshold to skip high wattage intervals
+
+        # Process intervals from the first, then skip based on power stability
+        for i, (interval, slope) in enumerate(zip(self.work_intervals, self.slopes), start=1):
+            start, end = interval
+            interval_data = self.df[(self.df['elapsed_time'] >= start) & (self.df['elapsed_time'] <= end)]
+            avg_power = interval_data[FIELD_MAPPINGS['power']].mean()
+
+            # Check the power stability; skip if the change is too high
+            if last_valid_power is not None and abs(avg_power - last_valid_power) > threshold_power_difference:
+                print(f"Skipping Interval #{i} due to high power difference (Power: {avg_power:.2f} Watts).")
+                continue
+
+            power_values.append(avg_power)
+            slope_values.append(slope)
+            last_valid_power = avg_power  # Update the last valid power
+
+            print(f"Slope for Interval #{i} (Power: {avg_power:.2f} Watts): {slope:.4f}")  # Print the slope and average power
+
+        # Plot the results
+        ax.plot(power_values, slope_values, 'o-', color='blue', label='SmO2 Slope vs. Power')
+
+        ax.set_xlabel('Power (Watts)')
+        ax.set_ylabel('SmO2 Slope')
+        ax.legend(loc='upper right')
+        ax.grid(True)
+
+        plt.title('SmO2 Slope vs. Power')
+        plt.show()

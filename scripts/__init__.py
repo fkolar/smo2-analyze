@@ -9,6 +9,12 @@ SHOW_SMO2_TREND = True  # For 5-minute intervals, skipping 1st minute
 SHOW_OVERALL_SMO2_TREND = False
 SHOW_REST_SMO2_PEAKS_TREND = False
 
+
+# New configuration setting to toggle chart type
+SHOW_SMO2_SLOPE_VS_POWER = False  # Set to True to show SmO2 slope vs. Power chart
+
+
+
 # Configuration settings for zooming
 ZOOM_ENABLED = False  # Default to False; set to True to enable zooming
 

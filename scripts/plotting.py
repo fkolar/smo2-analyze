@@ -118,27 +118,15 @@ class DataPlotter:
         power_values = []
         slope_values = []
 
-        last_valid_power = None  # Variable to store the last valid power value
-        threshold_power_difference = 30  # Define a threshold to skip high wattage intervals
-
-        # Process intervals from the first, then skip based on power stability
-        for i, (interval, slope) in enumerate(zip(self.work_intervals, self.slopes), start=1):
+        # Skip the first and last intervals by slicing the list from the second to the second last
+        for i, (interval, slope) in enumerate(zip(self.work_intervals[1:-1], self.slopes[1:-1]), start=2):
             start, end = interval
             interval_data = self.df[(self.df['elapsed_time'] >= start) & (self.df['elapsed_time'] <= end)]
             avg_power = interval_data[FIELD_MAPPINGS['power']].mean()
-
-            # Check the power stability; skip if the change is too high
-            if last_valid_power is not None and abs(avg_power - last_valid_power) > threshold_power_difference:
-                print(f"Skipping Interval #{i} due to high power difference (Power: {avg_power:.2f} Watts).")
-                continue
-
             power_values.append(avg_power)
             slope_values.append(slope)
-            last_valid_power = avg_power  # Update the last valid power
-
             print(f"Slope for Interval #{i} (Power: {avg_power:.2f} Watts): {slope:.4f}")  # Print the slope and average power
 
-        # Plot the results
         ax.plot(power_values, slope_values, 'o-', color='blue', label='SmO2 Slope vs. Power')
 
         ax.set_xlabel('Power (Watts)')

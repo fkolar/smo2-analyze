@@ -111,7 +111,7 @@ class DataPlotter:
                     # Print slope higher to avoid overlapping
                     mid_point = (start + end) / 2
                     max_smo2 = delayed_slope_data['smo2_smooth'].max()
-                    ax.text(mid_point, max_smo2 + 2, f"{z[0]:.4f}", fontsize=10, color='black', ha='center')
+                    # ax.text(mid_point, max_smo2 + 2, f"{z[0]:.4f}", fontsize=10, color='black', ha='center')
 
     def plot_smo2_slope_vs_power(self):
         fig, ax = plt.subplots(figsize=(10, 6))

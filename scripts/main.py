@@ -39,8 +39,8 @@ def main():
     plotter = DataPlotter(df_processed, work_intervals=work_intervals)  # Pass work_intervals
 
     # Define start_time and end_time (in minutes), pass -1 to use full range
-    start_time = -1  # Use -1 to indicate no zoom (full range)
-    end_time = -1  # Use -1 to indicate no zoom (full range)
+    start_time = 10  # Use -1 to indicate no zoom (full range)
+    end_time = 60  # Use -1 to indicate no zoom (full range)
     plotter.plot_data(start_time=start_time, end_time=end_time)
 
 if __name__ == "__main__":

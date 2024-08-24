@@ -24,7 +24,7 @@ HR_RANGE = [0, 188]
 THB_RANGE = [11.8, 12.7]
 
 # Configuration settings for smoothing
-SMOOTHING_WINDOW = 5  # Number of data points to include in the rolling mean
+SMOOTHING_WINDOW = 7  # Number of data points to include in the rolling mean
 MIN_PERIODS = 1  # Minimum number of observations in the window required to have a value
 
 # Configuration settings for plot aesthetics
